@@ -549,7 +549,11 @@ bool AudioMixer::track_t::setResampler(uint32_t value, uint32_t devSampleRate)
                       (value == 48000 && devSampleRate == 44100))) {
                     quality = AudioResampler::LOW_QUALITY;
                 } else {
+#ifdef QCOM_ENHANCED_AUDIO
+                    quality = AudioResampler::VERY_HIGH_QUALITY;
+#else
                     quality = AudioResampler::DEFAULT_QUALITY;
+#endif
                 }
                 resampler = AudioResampler::create(
                         format,
@@ -1098,12 +1102,6 @@ void AudioMixer::process__genericNoResampling(state_t* state, int64_t pts)
         e0 &= ~(1<<i);
         track_t& t = state->tracks[i];
         t.buffer.frameCount = state->frameCount;
-        int valid = t.bufferProvider->getValid();
-        if (valid != AudioBufferProvider::kValid) {
-            ALOGE("invalid bufferProvider=%p name=%d frameCount=%d valid=%#x enabledTracks=%#x",
-                    t.bufferProvider, i, t.buffer.frameCount, valid, enabledTracks);
-            // expect to crash
-        }
         t.bufferProvider->getNextBuffer(&t.buffer, pts);
         t.frameCount = t.buffer.frameCount;
         t.in = t.buffer.raw;
